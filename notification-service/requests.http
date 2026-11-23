@@ -1,0 +1,106 @@
+### 1. Get preferences
+GET http://localhost:3003/notifications/preferences?userId=1
+
+### 2. Update preferences (valid)
+PUT http://localhost:3003/notifications/preferences
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "email_enabled": true,
+  "reminders_enabled": true
+}
+
+### 3. Update preferences (invalid: missing fields)
+PUT http://localhost:3003/notifications/preferences
+Content-Type: application/json
+
+{
+  "userId": 1
+}
+
+### 4. Create confirmation notification (valid)
+POST http://localhost:3003/notifications/email
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "appointmentId": 10,
+  "type": "confirmation",
+  "email": "rana222400@bue.edu.eg"
+}
+
+### 5. Create notification (invalid type)
+POST http://localhost:3003/notifications/email
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "appointmentId": 10,
+  "type": "banana",
+  "email": "rana222400@bue.edu.eg"
+}
+
+
+### 6. Schedule a reminder (valid)
+POST http://localhost:3003/notifications/reminders
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "appointmentId": 10,
+  "email": "rana222400@bue.edu.eg",
+  "appointmentTime": "2026-11-16T10:00:00Z"
+}
+
+### 7. Schedule a reminder (invalid time)
+POST http://localhost:3003/notifications/reminders
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "appointmentId": 10,
+  "email": "rana222400@bue.edu.eg",
+  "appointmentTime": "not-a-date"
+}
+
+
+### 8. Notification history
+GET http://localhost:3003/notifications/history?userId=1
+
+### 9. Notification history (missing userId)
+GET http://localhost:3003/notifications/history
+
+### 13. Login (to get token)
+# @name login
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456"
+}
+
+### 14. Get preferences (no token) -> 401
+GET http://localhost:3003/notifications/preferences
+
+### 15. Get preferences (valid token) -> 200
+GET http://localhost:3003/notifications/preferences
+Authorization: Bearer {{login.response.body.token}}
+
+### 16. Update preferences (valid token) -> 200
+PUT http://localhost:3003/notifications/preferences
+Content-Type: application/json
+Authorization: Bearer {{login.response.body.token}}
+
+{
+  "email_enabled": true,
+  "reminders_enabled": false
+}
+### 17. Get preferences (tampered token) -> 401
+GET http://localhost:3003/notifications/preferences
+Authorization: Bearer {{login.response.body.token}}x
+
+### 18. History (valid token) -> 200
+GET http://localhost:3003/notifications/history
+Authorization: Bearer {{login.response.body.token}}

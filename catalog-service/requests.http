@@ -1,0 +1,429 @@
+### 1. Register an owner candidate (auth-service)
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{
+  "name": "Salon Owner",
+  "email": "owner@salon.com",
+  "password": "123456",
+  "role": "customer"
+}
+
+### 2. Login as owner
+# @name ownerLogin
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@salon.com",
+  "password": "123456"
+}
+
+### 3. Login as customer (Rana)
+# @name customerLogin
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456"
+}
+
+### 4. Create salon (owner) -> 201
+POST http://localhost:3002/salons
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "name": "Glow Salon",
+  "address": "12 Tahrir St",
+  "city": "Cairo",
+  "latitude": 30.0444,
+  "longitude": 31.2357
+}
+
+### 5. Create salon (no token) -> 401
+POST http://localhost:3002/salons
+Content-Type: application/json
+
+{
+  "name": "Fake",
+  "address": "x",
+  "city": "Cairo"
+}
+
+### 6. Create salon (customer token) -> 403
+POST http://localhost:3002/salons
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "name": "Fake",
+  "address": "x",
+  "city": "Cairo"
+}
+
+### 7. Create salon (missing fields) -> 400
+POST http://localhost:3002/salons
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "name": "No address"
+}
+
+### 8. List salons -> 200
+GET http://localhost:3002/salons
+
+### 9. Search by city -> 200
+GET http://localhost:3002/salons?city=cairo
+
+### 10. Search with bad rating -> 400
+GET http://localhost:3002/salons?minRating=abc
+
+### 11. Add service (owner) -> 201
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "name": "Haircut",
+  "price": 150,
+  "duration_minutes": 45
+}
+
+### 12. Add service (customer token) -> 403
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "name": "Haircut",
+  "price": 150,
+  "duration_minutes": 45
+}
+
+### 13. Add service (no token) -> 401
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+
+{
+  "name": "Haircut",
+  "price": 150,
+  "duration_minutes": 45
+}
+
+### 14. Add service (negative price) -> 400
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "name": "Bad",
+  "price": -5,
+  "duration_minutes": 45
+}
+
+### 15. Add service (salon does not exist) -> 404
+POST http://localhost:3002/salons/9999/services
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "name": "Haircut",
+  "price": 150,
+  "duration_minutes": 45
+}
+
+### 16. List services -> 200
+GET http://localhost:3002/salons/1/services
+
+### 17. Search salons by service -> 200
+GET http://localhost:3002/salons?service=hair
+
+### 18. Add stylist (owner) -> 201
+# @name createStylist
+POST http://localhost:3002/salons/1/stylists
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "name": "Sara"
+}
+
+### 19. Add stylist (customer token) -> 403
+POST http://localhost:3002/salons/1/stylists
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "name": "Fake"
+}
+
+### 20. List stylists -> 200
+GET http://localhost:3002/salons/1/stylists
+
+### 21. Set working hours (owner) -> 200
+PUT http://localhost:3002/stylists/{{createStylist.response.body.id}}/working-hours
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "hours": [
+    { "weekday": 1, "start_time": "09:00", "end_time": "17:00" },
+    { "weekday": 2, "start_time": "09:00", "end_time": "17:00" },
+    { "weekday": 3, "start_time": "10:00", "end_time": "18:00" }
+  ]
+}
+
+### 22. Set working hours (end before start) -> 400
+PUT http://localhost:3002/stylists/{{createStylist.response.body.id}}/working-hours
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "hours": [
+    { "weekday": 1, "start_time": "17:00", "end_time": "09:00" }
+  ]
+}
+
+### 23. Set working hours (customer token) -> 403
+PUT http://localhost:3002/stylists/{{createStylist.response.body.id}}/working-hours
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "hours": []
+}
+
+### 24. Set working hours (stylist does not exist) -> 404
+PUT http://localhost:3002/stylists/9999/working-hours
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "hours": []
+}
+
+### 25. Add time off (owner) -> 201
+POST http://localhost:3002/stylists/{{createStylist.response.body.id}}/time-off
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "from_time": "2026-12-02T00:00:00Z",
+  "to_time": "2026-12-03T00:00:00Z"
+}
+
+### 26. Add time off (to before from) -> 400
+POST http://localhost:3002/stylists/{{createStylist.response.body.id}}/time-off
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "from_time": "2026-12-05T00:00:00Z",
+  "to_time": "2026-12-04T00:00:00Z"
+}
+
+### 27. Add time off (customer token) -> 403
+POST http://localhost:3002/stylists/{{createStylist.response.body.id}}/time-off
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "from_time": "2026-12-02T00:00:00Z",
+  "to_time": "2026-12-03T00:00:00Z"
+}
+
+### 28. Add time off (no token) -> 401
+POST http://localhost:3002/stylists/1/time-off
+Content-Type: application/json
+
+{
+  "from_time": "2026-12-02T00:00:00Z",
+  "to_time": "2026-12-03T00:00:00Z"
+}
+
+### 29. Add time off (stylist does not exist) -> 404
+POST http://localhost:3002/stylists/9999/time-off
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "from_time": "2026-12-02T00:00:00Z",
+  "to_time": "2026-12-03T00:00:00Z"
+}
+
+### 30. Availability (Tuesday, normal day) -> 200, 15 slots
+GET http://localhost:3002/stylists/{{createStylist.response.body.id}}/availability?date=2026-12-01&serviceId=1
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 31. Availability (Wednesday, stylist is off) -> 200, slots empty
+GET http://localhost:3002/stylists/{{createStylist.response.body.id}}/availability?date=2026-12-02&serviceId=1
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 32. Availability (Sunday, no working hours) -> 200, slots empty
+GET http://localhost:3002/stylists/{{createStylist.response.body.id}}/availability?date=2026-12-06&serviceId=1
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 33. Availability (bad date) -> 400
+GET http://localhost:3002/stylists/{{createStylist.response.body.id}}/availability?date=not-a-date&serviceId=1
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 34. Availability (no token) -> 401
+GET http://localhost:3002/stylists/1/availability?date=2026-12-01&serviceId=1
+
+### 35. Availability (owner token, customers only) -> 403
+GET http://localhost:3002/stylists/{{createStylist.response.body.id}}/availability?date=2026-12-01&serviceId=1
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+### 36. Availability (service does not exist) -> 404
+GET http://localhost:3002/stylists/{{createStylist.response.body.id}}/availability?date=2026-12-01&serviceId=9999
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 37. Review (customer, appointment 100, rating 5) -> 201
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 100,
+  "rating": 5,
+  "comment": "Great haircut"
+}
+
+### 38. Review (same appointment again) -> 409
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 100,
+  "rating": 1,
+  "comment": "Trying again"
+}
+
+### 39. Review (second appointment, rating 4) -> 201, average 4.5
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 101,
+  "rating": 4
+}
+
+### 40. Review (rating 6) -> 400
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 102,
+  "rating": 6
+}
+
+### 41. Review (owner token) -> 403
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "appointment_id": 103,
+  "rating": 5
+}
+
+### 42. Review (no token) -> 401
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+
+{
+  "appointment_id": 104,
+  "rating": 5
+}
+
+### 43. Review (salon does not exist) -> 404
+POST http://localhost:3002/salons/9999/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 105,
+  "rating": 5
+}
+
+### 44. List reviews -> 200, average 4.5, 2 reviews
+GET http://localhost:3002/salons/1/reviews
+
+### 45. Search salons with minRating 4.5 -> 200, Glow Salon
+GET http://localhost:3002/salons?minRating=4.5
+
+### 46. Search salons with minRating 5 -> 200, empty
+GET http://localhost:3002/salons?minRating=5
+
+### 47. Register a stylist user (auth-service)
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{
+  "name": "Sara Stylist",
+  "email": "sara@salon.com",
+  "password": "123456",
+  "role": "stylist"
+}
+
+### 48. Login as stylist
+# @name stylistLogin
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@salon.com",
+  "password": "123456"
+}
+
+### 49. My salons (owner) -> 200, Glow Salon
+GET http://localhost:3002/salons/mine
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+### 50. My salons (customer token) -> 403
+GET http://localhost:3002/salons/mine
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 51. My stylist profile (stylist) -> 200, Sara
+GET http://localhost:3002/stylists/mine
+Authorization: Bearer {{stylistLogin.response.body.token}}
+
+### 52. My stylist profile (customer token) -> 403
+GET http://localhost:3002/stylists/mine
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 53. My salons (no token) -> 401
+GET http://localhost:3002/salons/mine
+
+### Test: catalog stylists/mine
+GET http://localhost:3002/stylists/mine
+Authorization: Bearer {{stylistLogin.response.body.token}}
+
+
+### Review with a REAL completed appointment (id 4) -> 201
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 4,
+  "rating": 5,
+  "comment": "Real review"
+}
+
+### Review with a fake appointment (555) -> 403 or 404
+POST http://localhost:3002/salons/1/reviews
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "appointment_id": 555,
+  "rating": 5,
+  "comment": "Fake"
+}

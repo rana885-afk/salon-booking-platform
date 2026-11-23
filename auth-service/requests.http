@@ -1,0 +1,95 @@
+### 1. Register (valid)
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{
+  "name": "Rana",
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456",
+  "role": "customer"
+}
+
+### 2. Register (same email again)
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{
+  "name": "Rana",
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456",
+  "role": "customer"
+}
+
+### 3. Register (password too short)
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test",
+  "email": "test@example.com",
+  "password": "123"
+}
+
+### 4. Register (role owner is not allowed)
+POST http://localhost:3001/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test",
+  "email": "owner@example.com",
+  "password": "123456",
+  "role": "owner"
+}
+
+
+### 5. Login (valid)
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456"
+}
+
+### 6. Login (wrong password)
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "rana222400@bue.edu.eg",
+  "password": "wrongpass"
+}
+
+### 7. Login (email does not exist)
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "nobody@example.com",
+  "password": "123456"
+}
+
+### 8. Login (to get token)
+# @name login
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456"
+}
+
+### 9. Me (no token) -> 401
+GET http://localhost:3001/auth/me
+
+### 10. Me (valid token) -> 200
+GET http://localhost:3001/auth/me
+Authorization: Bearer {{login.response.body.token}}
+
+### 11. Me (tampered token) -> 401
+GET http://localhost:3001/auth/me
+Authorization: Bearer {{login.response.body.token}}x
+
+### 12. Owner-only as customer -> 403
+GET http://localhost:3001/auth/owner-only
+Authorization: Bearer {{login.response.body.token}}

@@ -1,0 +1,402 @@
+### 1. Login as customer (Rana)
+# @name customerLogin
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "rana222400@bue.edu.eg",
+  "password": "123456"
+}
+
+### 2. Login as owner
+# @name ownerLogin
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@salon.com",
+  "password": "123456"
+}
+
+### 3. Login as stylist (Sara)
+# @name stylistLogin
+POST http://localhost:3001/auth/login
+Content-Type: application/json
+
+{
+  "email": "sara@salon.com",
+  "password": "123456"
+}
+
+### 4. Book (valid, Tuesday 09:00) -> 201
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-01T09:00:00Z"
+}
+
+### 5. Book (same slot again) -> 409
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-01T09:00:00Z"
+}
+
+### 6. Book (overlaps the first one, 09:30) -> 409
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-01T09:30:00Z"
+}
+
+### 7. Book (time is not on a free slot, 09:10) -> 409
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-01T09:10:00Z"
+}
+
+### 8. Book (stylist is on time off, Wednesday) -> 409
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-02T10:00:00Z"
+}
+
+### 9. Book (in the past) -> 400
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2020-01-07T09:00:00Z"
+}
+
+### 10. Book (missing fields) -> 400
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1
+}
+
+### 11. Book (stylist does not exist) -> 404
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 9999,
+  "service_id": 1,
+  "start_time": "2026-12-01T11:00:00Z"
+}
+
+### 12. Book (service does not exist) -> 404
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 9999,
+  "start_time": "2026-12-01T11:00:00Z"
+}
+
+### 13. Book (no token) -> 401
+POST http://localhost:3004/appointments
+Content-Type: application/json
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-01T11:00:00Z"
+}
+
+### 14. Book (owner token, customers only) -> 403
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-01T11:00:00Z"
+}
+
+### 15. Booked slots of the stylist -> 200
+GET http://localhost:3004/appointments/booked-slots?stylistId=1&date=2026-12-01
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 16. Booked slots (no token) -> 401
+GET http://localhost:3004/appointments/booked-slots?stylistId=1&date=2026-12-01
+
+### 17. Booked slots (bad date) -> 400
+GET http://localhost:3004/appointments/booked-slots?stylistId=1&date=abc
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 18. Booked slots (a day with no appointments) -> 200, empty
+GET http://localhost:3004/appointments/booked-slots?stylistId=1&date=2026-12-08
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 19. My appointments (customer) -> 200
+GET http://localhost:3004/appointments
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 20. My appointments filtered by status pending -> 200
+GET http://localhost:3004/appointments?status=pending
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 21. My appointments filtered by status completed -> 200
+GET http://localhost:3004/appointments?status=completed
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 22. My appointments (bad status) -> 400
+GET http://localhost:3004/appointments?status=abc
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 23. My appointments (no token) -> 401
+GET http://localhost:3004/appointments
+
+### 24. Stylist: list schedule -> 200
+GET http://localhost:3004/appointments
+Authorization: Bearer {{stylistLogin.response.body.token}}
+
+### 25. Owner: list pending appointments -> 200
+GET http://localhost:3004/appointments?status=pending
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+### 26. Owner: confirm appointment 4 -> 200
+PUT http://localhost:3004/appointments/4/status
+Authorization: Bearer {{ownerLogin.response.body.token}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### 27. Confirm again -> 409
+PUT http://localhost:3004/appointments/4/status
+Authorization: Bearer {{ownerLogin.response.body.token}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### 28. Complete a future appointment -> 409
+PUT http://localhost:3004/appointments/4/status
+Authorization: Bearer {{ownerLogin.response.body.token}}
+Content-Type: application/json
+
+{ "status": "completed" }
+
+### 29. Status change (customer token) -> 403
+PUT http://localhost:3004/appointments/4/status
+Authorization: Bearer {{customerLogin.response.body.token}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### 30. Status change (bad status) -> 400
+PUT http://localhost:3004/appointments/4/status
+Authorization: Bearer {{ownerLogin.response.body.token}}
+Content-Type: application/json
+
+{ "status": "banana" }
+
+### 31. Status change (appointment does not exist) -> 404
+PUT http://localhost:3004/appointments/99999/status
+Authorization: Bearer {{ownerLogin.response.body.token}}
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### 32. Status change (no token) -> 401
+PUT http://localhost:3004/appointments/4/status
+Content-Type: application/json
+
+{ "status": "confirmed" }
+
+### 33. Cancel my appointment (more than 24 hours away) -> 204
+# Run this AFTER the status tests above, because it cancels appointment 4
+DELETE http://localhost:3004/appointments/4
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 34. Cancel the same appointment again -> 403
+DELETE http://localhost:3004/appointments/4
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 35. Cancel an appointment that starts in 2 hours -> 403
+DELETE http://localhost:3004/appointments/99
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 36. Cancel (appointment does not exist) -> 404
+DELETE http://localhost:3004/appointments/9999
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 37. Cancel (bad id) -> 400
+DELETE http://localhost:3004/appointments/abc
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 38. Cancel (no token) -> 401
+DELETE http://localhost:3004/appointments/4
+
+### 39. Cancel (owner token, customers only) -> 403
+DELETE http://localhost:3004/appointments/4
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+### 40. My cancelled appointments -> 200
+GET http://localhost:3004/appointments?status=cancelled
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### 41. Reschedule to Tuesday 10:00 next week -> 200
+# Replace 5 with the id of a pending/confirmed appointment of yours
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-08T10:00:00Z"
+}
+
+### 42. Reschedule to the same time -> 400
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-08T10:00:00Z"
+}
+
+### 43. Reschedule to a day the stylist is off -> 409
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-02T10:00:00Z"
+}
+
+### 44. Reschedule to a time not on a slot -> 409
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-08T12:10:00Z"
+}
+
+### 45. Reschedule to the past -> 400
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2020-01-07T09:00:00Z"
+}
+
+### 46. Reschedule (missing start_time) -> 400
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{}
+
+### 47. Reschedule (appointment does not exist) -> 404
+PUT http://localhost:3004/appointments/9999
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-08T10:00:00Z"
+}
+
+### 48. Reschedule a cancelled appointment -> 403
+PUT http://localhost:3004/appointments/4
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-08T11:00:00Z"
+}
+
+### 49. Reschedule (no token) -> 401
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+
+{
+  "start_time": "2026-12-08T10:00:00Z"
+}
+
+### 50. Reschedule (owner token, customers only) -> 403
+PUT http://localhost:3004/appointments/5
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-08T10:00:00Z"
+}
+
+### Book a new appointment for cancel/reschedule tests -> 201
+POST http://localhost:3004/appointments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "salon_id": 1,
+  "stylist_id": 1,
+  "service_id": 1,
+  "start_time": "2026-12-08T09:00:00Z"
+}
+
+### Reschedule appointment 11 to Tuesday 15 Dec 10:00 -> 200
+PUT http://localhost:3004/appointments/11
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-15T10:00:00Z"
+}
+
+### Reschedule appointment 12 to Tuesday 22 Dec 10:00 -> 200
+PUT http://localhost:3004/appointments/12
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{
+  "start_time": "2026-12-22T10:00:00Z"
+}
+
+
+### Cancel appointment 11 -> 204
+DELETE http://localhost:3004/appointments/11
+Authorization: Bearer {{customerLogin.response.body.token}}
