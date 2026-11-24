@@ -422,3 +422,16 @@ Content-Type: application/json
 Authorization: Bearer {{customerLogin.response.body.token}}
 
 { "appointment_id": 12, "amount": -5 }
+
+### Refund payment 2 -> 200
+POST http://localhost:3005/payments/2/refund
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### Refund payment 2 again -> 409
+POST http://localhost:3005/payments/2/refund
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### Refund payment that does not exist -> 404
+POST http://localhost:3005/payments/9999/refund
+Authorization: Bearer {{customerLogin.response.body.token}}
+
