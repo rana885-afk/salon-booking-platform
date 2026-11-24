@@ -424,5 +424,28 @@ router.put('/:id', verifyToken, requireRole('customer'), async (req, res) => {
   res.json(updated);
 });
 
+router.get('/:id', verifyToken, requireRole('customer'), async (req, res) => {
+  const appointmentId = parseInt(req.params.id, 10);
+  if (!appointmentId) {
+    return res.status(400).json({ error: 'a valid appointment id is required' });
+  }
+
+  try {
+    const found = await pool.query('SELECT * FROM booking.appointments WHERE id = $1', [appointmentId]);
+    const appointment = found.rows[0];
+
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    if (appointment.customer_id !== req.user.userId) {
+      return res.status(403).json({ error: 'This is not your appointment' });
+    }
+    res.json(appointment);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 module.exports = router;
 
