@@ -4,7 +4,17 @@ const { verifyToken, requireRole } = require('./middleware');
 
 const router = express.Router();
 
-// POST /salons/:id/reviews (customer only)
+// Asks the Booking service for the appointment, using the customer's own token.
+// The Booking service only returns appointments that belong to that customer.
+async function getAppointment(appointmentId, authHeader) {
+  const response = await fetch(`${process.env.BOOKING_URL}/appointments/${appointmentId}`, {
+    headers: { Authorization: authHeader }
+  });
+  const body = await response.json().catch(() => null);
+  return { status: response.status, ok: response.ok, body };
+}
+
+// POST /salons/:id/reviews (customer only, completed appointment only)
 router.post('/:id/reviews', verifyToken, requireRole('customer'), async (req, res) => {
   const salonId = parseInt(req.params.id, 10);
   const appointmentId = parseInt(req.body.appointment_id, 10);
@@ -25,6 +35,26 @@ router.post('/:id/reviews', verifyToken, requireRole('customer'), async (req, re
     const salon = await pool.query('SELECT id FROM catalog.salons WHERE id = $1', [salonId]);
     if (salon.rows.length === 0) {
       return res.status(404).json({ error: 'Salon not found' });
+    }
+
+    // The appointment must exist, belong to this customer, be in this salon and be completed
+    let appointment;
+    try {
+      const result = await getAppointment(appointmentId, req.headers.authorization);
+      if (result.status === 404 || result.status === 403) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+      if (!result.ok) throw new Error('Booking error');
+      appointment = result.body;
+    } catch (err) {
+      return res.status(502).json({ error: 'Booking service unavailable' });
+    }
+
+    if (appointment.salon_id !== salonId) {
+      return res.status(400).json({ error: 'This appointment is not in this salon' });
+    }
+    if (appointment.status !== 'completed') {
+      return res.status(403).json({ error: 'You can only review a completed appointment' });
     }
 
     const result = await pool.query(

@@ -13,6 +13,19 @@ async function getAppointment(id, authHeader) {
   return r.json();
 }
 
+async function setAppointmentStatus(id, status, authHeader) {
+  try {
+    const r = await fetch(`${process.env.BOOKING_URL}/appointments/${id}/payment-status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+      body: JSON.stringify({ status }),
+    });
+    if (!r.ok) console.error('Could not set appointment status:', r.status);
+  } catch (e) {
+    console.error('Could not reach booking service:', e.message);
+  }
+}
+
 async function createPayment({ appointmentId, amount, userId, authHeader }) {
   if (!Number.isInteger(appointmentId) || appointmentId <= 0)
     throw fail(400, 'appointment_id must be a positive integer');
@@ -43,6 +56,10 @@ async function createPayment({ appointmentId, amount, userId, authHeader }) {
      VALUES ($1,$2,$3,$4,$5) RETURNING *`,
     [appointmentId, userId, amount, intent.id, intent.status]
   );
+
+  if (rows[0].status === 'succeeded') {
+    await setAppointmentStatus(appointmentId, 'confirmed', authHeader);
+  }
   return rows[0];
 }
 
@@ -59,12 +76,13 @@ async function listPayments(userId) {
   return rows;
 }
 
-async function refundPayment(id, userId) {
+async function refundPayment(id, userId, authHeader) {
   const p = await getPayment(id, userId);
   if (p.status !== 'succeeded') throw fail(409, `Cannot refund a ${p.status} payment`);
   await stripe.refunds.create({ payment_intent: p.stripe_payment_intent_id });
   const { rows } = await db.query(
     "UPDATE payment.payments SET status='refunded' WHERE id=$1 RETURNING *", [id]);
+  await setAppointmentStatus(p.appointment_id, 'cancelled', authHeader);
   return rows[0];
 }
 

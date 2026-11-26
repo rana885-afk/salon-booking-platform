@@ -46,7 +46,7 @@ router.put('/preferences', verifyToken, async (req, res) => {
 // POST /notifications/email  (called by the Booking service)
 router.post('/email', async (req, res) => {
   const { userId, appointmentId, type, email } = req.body;
-  if (!userId || !appointmentId || !email || !['confirmation', 'cancellation', 'reschedule'].includes(type)) {
+  if (!userId || !appointmentId || !email || !['confirmation', 'cancellation', 'reschedule', 'refund'].includes(type)) {
     return res.status(400).json({ error: 'userId, appointmentId, email and a valid type are required' });
   }
 
@@ -73,7 +73,8 @@ router.post('/email', async (req, res) => {
   const subjects = {
   confirmation: 'Your appointment is confirmed',
   cancellation: 'Your appointment was cancelled',
-  reschedule: 'Your appointment was rescheduled'
+  reschedule: 'Your appointment was rescheduled',
+  refund: 'Your payment was refunded'
 };
 const subject = subjects[type];
   const html = `<p>${subject}. Appointment number: ${notification.appointment_id}.</p>`;

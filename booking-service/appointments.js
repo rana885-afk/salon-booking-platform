@@ -22,7 +22,7 @@ async function notify(path, body) {
     });
     if (!response.ok) console.error(`Notification ${path} returned ${response.status}`);
   } catch (err) {
-    console.error(`Notification ${path} failed: ${err.message}`);
+        console.error(`Notification ${path} failed:`, err.message, err.cause);
   }
 }
 
@@ -269,7 +269,75 @@ router.put('/:id/status', verifyToken, requireRole('owner', 'stylist'), async (r
   }
 });
 
+// PUT /appointments/:id/payment-status (called by the Payment service with the customer's token)
+// body: { "status": "confirmed" } after payment, { "status": "cancelled" } after refund
+router.put('/:id/payment-status', verifyToken, requireRole('customer'), async (req, res) => {
+  const appointmentId = parseInt(req.params.id, 10);
+  const { status } = req.body;
+
+  if (!appointmentId || !['confirmed', 'cancelled'].includes(status)) {
+    return res.status(400).json({ error: 'a valid appointment id and status (confirmed or cancelled) are required' });
+  }
+
+  try {
+    const found = await pool.query('SELECT * FROM booking.appointments WHERE id = $1', [appointmentId]);
+    const appointment = found.rows[0];
+
+    if (!appointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+    if (appointment.customer_id !== req.user.userId) {
+      return res.status(403).json({ error: 'This is not your appointment' });
+    }
+
+    const from = status === 'confirmed' ? ['pending'] : ['pending', 'confirmed'];
+    if (!from.includes(appointment.status)) {
+      return res.status(409).json({ error: `A ${appointment.status} appointment cannot be marked as ${status}` });
+    }
+
+    const result = await pool.query(
+      `UPDATE booking.appointments
+       SET status = $2
+       WHERE id = $1 AND status = ANY($3)
+       RETURNING *`,
+      [appointmentId, status, from]
+    );
+    if (result.rows.length === 0) {
+      return res.status(409).json({ error: 'The appointment status has just changed, try again' });
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 const CANCELLATION_WINDOW_HOURS = 24;
+// Refunds the succeeded payment of this appointment (if there is one).
+// Returns { ok: true, refunded: true } when money was returned,
+// { ok: true, refunded: false } when there was nothing to refund.
+async function refundIfPaid(appointmentId, authHeader) {
+  if (!process.env.PAYMENT_URL) return { ok: true, refunded: false };
+  try {
+    const list = await callService(`${process.env.PAYMENT_URL}/payments`, {
+      headers: { Authorization: authHeader }
+    });
+    if (!list.ok || !Array.isArray(list.body)) return { ok: false };
+
+    const paid = list.body.find(
+      p => Number(p.appointment_id) === appointmentId && p.status === 'succeeded'
+    );
+    if (!paid) return { ok: true, refunded: false };
+
+    const refund = await callService(`${process.env.PAYMENT_URL}/payments/${paid.id}/refund`, {
+      method: 'POST',
+      headers: { Authorization: authHeader }
+    });
+    return { ok: refund.ok, refunded: refund.ok };
+  } catch (err) {
+    console.error('Refund failed:', err.message);
+    return { ok: false };
+  }
+}
 
 // DELETE /appointments/:id (customer cancels their own appointment)
 router.delete('/:id', verifyToken, requireRole('customer'), async (req, res) => {
@@ -299,6 +367,10 @@ router.delete('/:id', verifyToken, requireRole('customer'), async (req, res) => 
       });
     }
 
+        const refund = await refundIfPaid(appointmentId, req.headers.authorization);
+    if (!refund.ok) {
+      return res.status(502).json({ error: 'Could not refund the payment, the appointment was not cancelled' });
+    }
     await pool.query(
       `UPDATE booking.appointments
        SET status = 'cancelled'
@@ -306,12 +378,21 @@ router.delete('/:id', verifyToken, requireRole('customer'), async (req, res) => 
       [appointmentId]
     );
 
-    notify('/notifications/email', {
+        notify('/notifications/email', {
       userId: req.user.userId,
       appointmentId,
       type: 'cancellation',
       email: req.user.email
     });
+
+    if (refund.refunded) {
+      notify('/notifications/email', {
+        userId: req.user.userId,
+        appointmentId,
+        type: 'refund',
+        email: req.user.email
+      });
+    }
 
     res.status(204).send();
   } catch (err) {
@@ -446,6 +527,4 @@ router.get('/:id', verifyToken, requireRole('customer'), async (req, res) => {
   }
 });
 
-
 module.exports = router;
-

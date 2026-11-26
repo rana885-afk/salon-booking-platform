@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const auth = require('./middleware/auth');
 const svc = require('./services/paymentService');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -29,12 +31,14 @@ app.get('/payments/:id', auth, async (req, res, next) => {
 });
 
 app.post('/payments/:id/refund', auth, async (req, res, next) => {
-  try { res.json(await svc.refundPayment(Number(req.params.id), req.user.id)); } catch (e) { next(e); }
+  try {
+    res.json(await svc.refundPayment(Number(req.params.id), req.user.id, req.headers.authorization));
+  } catch (e) { next(e); }
 });
 
 app.use((err, req, res, next) => {
   if (!err.status) console.error(err);
- res.status(err.status || 500).json({ error: err.message });
+  res.status(err.status || 500).json({ error: err.message });
 });
 
 app.listen(process.env.PORT || 3005, () => console.log('Payment service on port', process.env.PORT || 3005));

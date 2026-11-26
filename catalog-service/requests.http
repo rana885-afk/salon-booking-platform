@@ -427,3 +427,70 @@ Authorization: Bearer {{customerLogin.response.body.token}}
   "rating": 5,
   "comment": "Fake"
 }
+
+### Add service: Hair coloring
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{ "name": "Hair coloring", "price": 400, "duration_minutes": 90 }
+
+### Add service: Manicure
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{ "name": "Manicure", "price": 120, "duration_minutes": 30 }
+
+### Add service: Blow dry
+POST http://localhost:3002/salons/1/services
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{ "name": "Blow dry", "price": 100, "duration_minutes": 30 }
+
+### Add stylist: Mona
+# @name newStylist1
+POST http://localhost:3002/salons/1/stylists
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{ "name": "Mona" }
+
+### Working hours for Mona (Sun-Thu 09:00-17:00)
+PUT http://localhost:3002/stylists/{{newStylist1.response.body.id}}/working-hours
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "hours": [
+    { "weekday": 0, "start_time": "09:00", "end_time": "17:00" },
+    { "weekday": 1, "start_time": "09:00", "end_time": "17:00" },
+    { "weekday": 2, "start_time": "09:00", "end_time": "17:00" },
+    { "weekday": 3, "start_time": "09:00", "end_time": "17:00" },
+    { "weekday": 4, "start_time": "09:00", "end_time": "17:00" }
+  ]
+}
+
+### Add stylist: Nour
+# @name newStylist2
+POST http://localhost:3002/salons/1/stylists
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{ "name": "Nour" }
+
+### Working hours for Nour (Sun-Thu 12:00-20:00)
+PUT http://localhost:3002/stylists/{{newStylist2.response.body.id}}/working-hours
+Content-Type: application/json
+Authorization: Bearer {{ownerLogin.response.body.token}}
+
+{
+  "hours": [
+    { "weekday": 0, "start_time": "12:00", "end_time": "20:00" },
+    { "weekday": 1, "start_time": "12:00", "end_time": "20:00" },
+    { "weekday": 2, "start_time": "12:00", "end_time": "20:00" },
+    { "weekday": 3, "start_time": "12:00", "end_time": "20:00" },
+    { "weekday": 4, "start_time": "12:00", "end_time": "20:00" }
+  ]
+}
