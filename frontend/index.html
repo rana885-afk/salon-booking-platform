@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Salon Booking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink: #ff5fa2;
+      --pink-dark: #e2468a;
+      --lilac: #b79cff;
+      --soft: #fff0f7;
+      --ink: #4a2c4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', Arial, sans-serif;
+      color: var(--ink);
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 24px 14px 60px;
+      background: linear-gradient(-45deg, #ffd6ec, #e9d8ff, #d6ecff, #ffe4d6, #ffd6f5);
+      background-size: 400% 400%;
+      background-attachment: fixed;
+      animation: bgShift 18s ease infinite;
+      min-height: 100vh;
+    }
+    h2 {
+      font-family: 'Pacifico', cursive;
+      font-weight: 400;
+      font-size: 32px;
+      text-align: center;
+      margin: 18px 0 14px;
+      background: linear-gradient(90deg, var(--pink), var(--lilac));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      margin: 6px 0;
+      border: 2px solid #ffd3e6;
+      border-radius: 14px;
+      background: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 4px rgba(255, 95, 162, .15);
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 6px 0;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(90deg, var(--pink), var(--lilac));
+      color: #fff;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(255, 95, 162, .25);
+      transition: transform .15s, box-shadow .15s;
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 10px 18px rgba(255, 95, 162, .35); }
+    button:active { transform: translateY(0); }
+    button.linkBtn {
+      background: none;
+      box-shadow: none;
+      color: var(--pink-dark);
+      text-decoration: underline;
+      font-weight: 500;
+    }
+    #msg, #regMsg { color: #e0245e; text-align: center; }
+    #loginView, #registerView {
+      background: rgba(255, 255, 255, .85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 22px;
+      border-radius: 24px;
+      box-shadow: 0 12px 30px rgba(183, 156, 255, .3);
+      margin-top: 40px;
+    }
+    .loginEmoji { text-align: center; font-size: 46px; animation: floaty 3s ease-in-out infinite; }
+    .card {
+      background: #fff;
+      border: none;
+      border-radius: 22px;
+      padding: 18px;
+      margin: 16px 0;
+      box-shadow: 0 10px 28px rgba(183, 156, 255, .28);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--pink), var(--lilac));
+      z-index: 1;
+    }
+    .card h3 {
+      font-family: 'Pacifico', cursive;
+      font-weight: 400;
+      font-size: 22px;
+      margin: 6px 0 8px;
+      color: var(--pink-dark);
+    }
+    .card a {
+      display: inline-block;
+      margin: 6px 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--soft);
+      color: var(--pink-dark);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .card iframe { border-radius: 16px; }
+    .bookForm, .reschedForm, .reviewForm, .revList, .writeForm {
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      background: var(--soft);
+      border-radius: 16px;
+    }
+    .result { margin: 6px 0 0; font-size: 14px; }
+    .status {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 20px;
+      background: var(--soft);
+      color: var(--pink-dark);
+      font-weight: 600;
+    }
+    .revItem {
+      border-top: 1px dashed #ffc2dc;
+      padding: 8px 0;
+    }
+    .revItem:first-child { border-top: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes floaty {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: .3; transform: scale(.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .card { animation: fadeUp .5s ease backwards; transition: transform .2s; }
+    .card:hover { transform: translateY(-3px); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      padding: 30px 16px 26px;
+      margin: 6px 0 14px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #ff5fa2 0%, #b79cff 100%);
+      color: #fff;
+      box-shadow: 0 14px 32px rgba(255, 95, 162, .35);
+    }
+    .hero h1 {
+      font-family: 'Pacifico', cursive;
+      font-weight: 400;
+      font-size: 46px;
+      margin: 0;
+      text-shadow: 0 3px 10px rgba(0, 0, 0, .15);
+    }
+    .hero p { margin: 8px 0 0; font-size: 15px; opacity: .95; }
+    .hero .emo { font-size: 34px; display: inline-block; animation: floaty 3s ease-in-out infinite; }
+    .hero .sp { position: absolute; font-size: 20px; animation: twinkle 2.4s ease-in-out infinite; }
+    .hero .sp1 { top: 12px; left: 18px; }
+    .hero .sp2 { top: 22px; right: 22px; animation-delay: .8s; }
+    .hero .sp3 { bottom: 14px; left: 36px; animation-delay: 1.4s; }
+    .hero .sp4 { bottom: 18px; right: 40px; animation-delay: .4s; }
+
+    .cardBanner {
+      height: 92px;
+      margin: -18px -18px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      letter-spacing: 8px;
+      background: linear-gradient(135deg, #ffd1e8, #e2d4ff);
+    }
+    .card:nth-child(3n+2) .cardBanner { background: linear-gradient(135deg, #ffe0c2, #ffc2dc); }
+    .card:nth-child(3n+3) .cardBanner { background: linear-gradient(135deg, #cfe8ff, #e9d4ff); }
+
+    .stars { color: #ffb300; font-size: 18px; letter-spacing: 2px; }
+    .stars small { color: var(--ink); font-size: 13px; letter-spacing: 0; margin-left: 6px; }
+
+    .status.st-pending { background: #fff4cc; color: #9a6b00; }
+    .status.st-confirmed { background: #d9f7e3; color: #1c7a40; }
+    .status.st-completed { background: #ece1ff; color: #6a3fc4; }
+    .status.st-cancelled { background: #ffdce5; color: #c2214f; }
+
+    /* ===== Creative background ===== */
+    @keyframes bgShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes blobMove {
+      0%   { transform: translate(0, 0) scale(1); }
+      33%  { transform: translate(40px, -60px) scale(1.15); }
+      66%  { transform: translate(-30px, 40px) scale(.9); }
+      100% { transform: translate(0, 0) scale(1); }
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10%  { opacity: .9; }
+      90%  { opacity: .9; }
+      100% { transform: translateY(-115vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* soft dots pattern over the whole page */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: radial-gradient(rgba(255, 95, 162, .18) 2px, transparent 2px);
+      background-size: 26px 26px;
+      pointer-events: none;
+    }
+
+    .bgDecor {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: .55;
+      animation: blobMove 16s ease-in-out infinite;
+    }
+    .blob.b1 { width: 380px; height: 380px; background: #ff7eb6; top: -80px; left: -100px; }
+    .blob.b2 { width: 320px; height: 320px; background: #b79cff; top: 30%; right: -120px; animation-delay: -5s; }
+    .blob.b3 { width: 300px; height: 300px; background: #8fd3ff; bottom: -100px; left: 15%; animation-delay: -9s; }
+    .blob.b4 { width: 240px; height: 240px; background: #ffc48f; top: 55%; left: -80px; animation-delay: -12s; }
+
+    .floaty {
+      position: absolute;
+      bottom: -60px;
+      font-size: 26px;
+      animation: floatUp linear infinite;
+    }
+    .floaty.f1 { left: 5%;  animation-duration: 14s; animation-delay: 0s; }
+    .floaty.f2 { left: 15%; animation-duration: 18s; animation-delay: -4s;  font-size: 20px; }
+    .floaty.f3 { left: 28%; animation-duration: 16s; animation-delay: -9s; }
+    .floaty.f4 { left: 42%; animation-duration: 20s; animation-delay: -2s;  font-size: 18px; }
+    .floaty.f5 { left: 58%; animation-duration: 15s; animation-delay: -7s; }
+    .floaty.f6 { left: 70%; animation-duration: 19s; animation-delay: -12s; font-size: 22px; }
+    .floaty.f7 { left: 82%; animation-duration: 17s; animation-delay: -5s; }
+    .floaty.f8 { left: 93%; animation-duration: 21s; animation-delay: -10s; font-size: 20px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      body, .blob { animation: none; }
+      .floaty { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bgDecor">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+    <div class="blob b4"></div>
+    <span class="floaty f1">💖</span>
+    <span class="floaty f2">✨</span>
+    <span class="floaty f3">🌸</span>
+    <span class="floaty f4">💅</span>
+    <span class="floaty f5">🎀</span>
+    <span class="floaty f6">💇‍♀️</span>
+    <span class="floaty f7">🌷</span>
+    <span class="floaty f8">✨</span>
+  </div>
+
+  <div id="loginView">
+    <div class="loginEmoji">💇‍♀️</div>
+    <h2>Login</h2>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login ✨</button>
+    <button class="linkBtn" onclick="showRegister()">Create account</button>
+    <p id="msg"></p>
+  </div>
+
+  <div id="registerView" style="display:none">
+    <div class="loginEmoji">🌸</div>
+    <h2>Create account</h2>
+    <input id="regName" type="text" placeholder="Name">
+    <input id="regEmail" type="email" placeholder="Email">
+    <input id="regPassword" type="password" placeholder="Password (at least 6 characters)">
+    <button onclick="register()">Register 💖</button>
+    <button class="linkBtn" onclick="showLogin()">Back to login</button>
+    <p id="regMsg"></p>
+  </div>
+
+  <div id="salonsView" style="display:none">
+    <div class="hero">
+      <span class="sp sp1">✨</span>
+      <span class="sp sp2">💖</span>
+      <span class="sp sp3">✨</span>
+      <span class="sp sp4">🌸</span>
+      <div class="emo">💇‍♀️</div>
+      <h1>Glow</h1>
+      <p>Your beauty, booked in a click ✨</p>
+    </div>
+    <button onclick="showAppointments()">📅 My appointments</button>
+    <button onclick="logout()">👋 Logout</button>
+    <p id="salonsMsg" style="color:red"></p>
+    <div id="salonsList"></div>
+  </div>
+
+  <div id="apptView" style="display:none">
+    <h2>My appointments</h2>
+    <button onclick="showSalons()">⬅️ Back to salons</button>
+    <p id="apptMsg" style="color:red"></p>
+    <div id="apptList"></div>
+  </div>
+
+  <div id="staffView" style="display:none">
+    <h2 id="staffTitle">Appointments</h2>
+    <button onclick="showStaff()">🔄 Refresh</button>
+    <button onclick="logout()">👋 Logout</button>
+    <p id="staffMsg" style="color:red"></p>
+    <div id="staffList"></div>
+  </div>
+
+  <script>
+    let salonsCache = [];
+
+    function authHeaders() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('token')
+      };
+    }
+
+    function fmt(iso) {
+      const d = new Date(iso).toISOString();
+      return d.slice(0, 10) + ' ' + d.slice(11, 16);
+    }
+
+    function starsHtml(avg, count) {
+      const n = Number(avg) || 0;
+      const full = Math.round(n);
+      let s = '';
+      for (let i = 1; i <= 5; i++) s += i <= full ? '⭐' : '☆';
+      return '<span class="stars">' + s + '</span>' +
+        (count > 0 ? '<small>' + n.toFixed(1) + ' (' + count + ' reviews)</small>' : '<small>No reviews yet</small>');
+    }
+
+    function statusBadge(status) {
+      const icons = { pending: '🟡', confirmed: '🟢', completed: '💜', cancelled: '🔴' };
+      return '<span class="status st-' + status + '">' + (icons[status] || '') + ' ' + status + '</span>';
+    }
+
+    function showLogin() {
+      document.getElementById('registerView').style.display = 'none';
+      document.getElementById('loginView').style.display = 'block';
+    }
+
+    function showRegister() {
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('registerView').style.display = 'block';
+    }
+
+    async function loginWith(email, password, msg) {
+      try {
+        const res = await fetch('http://localhost:3001/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: password })
+        });
+        const data = await res.json();
+        if (!res.ok) { msg.textContent = data.error || 'Login failed'; return; }
+        localStorage.setItem('token', data.token);
+        route();
+      } catch (e) {
+        msg.textContent = 'Cannot reach server';
+      }
+    }
+
+    async function login() {
+      const msg = document.getElementById('msg');
+      msg.textContent = '';
+      await loginWith(
+        document.getElementById('email').value,
+        document.getElementById('password').value,
+        msg
+      );
+    }
+
+    async function register() {
+      const msg = document.getElementById('regMsg');
+      msg.style.color = 'red';
+      msg.textContent = '';
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      if (!name || !email || password.length < 6) {
+        msg.textContent = 'Enter a name, an email and a password of at least 6 characters';
+        return;
+      }
+      try {
+        const res = await fetch('http://localhost:3001/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: name, email: email, password: password, role: 'customer' })
+        });
+        const data = await res.json();
+        if (!res.ok) { msg.textContent = data.error || 'Registration failed'; return; }
+        await loginWith(email, password, msg);
+      } catch (e) {
+        msg.textContent = 'Cannot reach server';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      document.getElementById('salonsView').style.display = 'none';
+      document.getElementById('apptView').style.display = 'none';
+      document.getElementById('staffView').style.display = 'none';
+      document.getElementById('registerView').style.display = 'none';
+      document.getElementById('loginView').style.display = 'block';
+    }
+
+    function getRole() {
+      try {
+        const p = localStorage.getItem('token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(atob(p)).role;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function route() {
+      const role = getRole();
+      if (role === 'owner' || role === 'stylist') showStaff(role);
+      else showSalons();
+    }
+
+    async function showStaff(role) {
+      role = role || getRole();
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('registerView').style.display = 'none';
+      document.getElementById('salonsView').style.display = 'none';
+      document.getElementById('apptView').style.display = 'none';
+      document.getElementById('staffView').style.display = 'block';
+      document.getElementById('staffTitle').textContent = role === 'owner' ? 'Owner - appointments' : 'Stylist - my schedule';
+      const list = document.getElementById('staffList');
+      const msg = document.getElementById('staffMsg');
+      list.innerHTML = '';
+      msg.style.color = 'red';
+      msg.textContent = '';
+      try {
+        if (salonsCache.length === 0) {
+          const sr = await fetch('http://localhost:3002/salons');
+          const sd = await sr.json();
+          if (sr.ok) salonsCache = sd;
+        }
+        const res = await fetch('http://localhost:3004/appointments', { headers: authHeaders() });
+        const appts = await res.json();
+        if (!res.ok) { msg.textContent = appts.error || 'Could not load appointments'; return; }
+        if (appts.length === 0) { msg.textContent = 'No appointments yet'; return; }
+        appts.forEach(a => {
+          const salon = salonsCache.find(s => s.id === a.salon_id);
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <h3>${salon ? salon.name : 'Salon #' + a.salon_id}</h3>
+            <div>📌 Appointment #${a.id} - Customer #${a.customer_id}</div>
+            <div>🕒 ${fmt(a.start_time)} - ${fmt(a.end_time).slice(11)}</div>
+            <div>💰 Price: ${Number(a.price)}</div>
+            <div>${statusBadge(a.status)}</div>
+            ${a.status === 'pending' ? `<button onclick="setStatus(${a.id}, 'confirmed')">✅ Confirm</button>` : ''}
+            ${a.status === 'confirmed' ? `<button onclick="setStatus(${a.id}, 'completed')">💜 Mark completed</button>` : ''}`;
+          list.appendChild(div);
+        });
+      } catch (e) {
+        msg.textContent = 'Cannot reach booking service';
+      }
+    }
+
+    async function setStatus(id, status) {
+      const msg = document.getElementById('staffMsg');
+      msg.style.color = 'red';
+      msg.textContent = '';
+      try {
+        const res = await fetch('http://localhost:3004/appointments/' + id + '/status', {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ status: status })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.textContent = data.error || 'Could not change the status'; return; }
+        await showStaff();
+        const m2 = document.getElementById('staffMsg');
+        m2.style.color = 'green';
+        m2.textContent = 'Appointment #' + id + ' is now ' + status;
+      } catch (e) {
+        msg.textContent = 'Cannot reach booking service';
+      }
+    }
+
+    function mapQuery(s) {
+      if (s.latitude !== null && s.latitude !== undefined && s.longitude !== null && s.longitude !== undefined) {
+        return s.latitude + ',' + s.longitude;
+      }
+      return encodeURIComponent(s.address + ', ' + s.city);
+    }
+
+    function toggleMap(salonId) {
+      const box = document.getElementById('map' + salonId);
+      if (box.style.display === 'block') { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      if (!box.dataset.loaded) {
+        const s = salonsCache.find(x => x.id === salonId);
+        box.innerHTML = '<iframe width="100%" height="250" style="border:0" loading="lazy" ' +
+          'src="https://maps.google.com/maps?q=' + mapQuery(s) + '&z=15&output=embed"></iframe>';
+        box.dataset.loaded = '1';
+      }
+    }
+
+    async function showSalons() {
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('registerView').style.display = 'none';
+      document.getElementById('apptView').style.display = 'none';
+      document.getElementById('staffView').style.display = 'none';
+      document.getElementById('salonsView').style.display = 'block';
+      const list = document.getElementById('salonsList');
+      const msg = document.getElementById('salonsMsg');
+      list.innerHTML = '';
+      msg.textContent = '';
+      const banners = ['💇‍♀️ ✨ 💅', '💄 🌸 ✂️', '🧖‍♀️ 💖 🪞'];
+      try {
+        const res = await fetch('http://localhost:3002/salons');
+        const salons = await res.json();
+        if (!res.ok) { msg.textContent = 'Could not load salons'; return; }
+        salonsCache = salons;
+        salons.forEach((s, i) => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.style.animationDelay = (i * 0.08) + 's';
+          div.innerHTML = `
+            <div class="cardBanner">${banners[i % banners.length]}</div>
+            <h3>${s.name}</h3>
+            <div>📍 ${s.address}, ${s.city}</div>
+            <a href="https://www.google.com/maps/search/?api=1&query=${mapQuery(s)}" target="_blank">🗺️ Open in Google Maps</a>
+            <button onclick="toggleMap(${s.id})">📍 Show map</button>
+            <div id="map${s.id}" style="display:none; margin-top:8px"></div>
+            <div id="rating${s.id}">Loading rating...</div>
+            <button onclick="toggleReviews(${s.id})">⭐ Reviews</button>
+            <div class="revList" id="revList${s.id}"></div>
+            <button onclick="toggleWrite(${s.id})">✍️ Write a review</button>
+            <div class="writeForm" id="write${s.id}"></div>
+            <button onclick="toggleForm(${s.id})">💇‍♀️ Book</button>
+            <div class="bookForm" id="form${s.id}">
+              <select id="stylist${s.id}"></select>
+              <select id="service${s.id}"></select>
+              <input type="date" id="date${s.id}">
+              <button onclick="loadSlots(${s.id})">🕒 Show times</button>
+              <select id="slot${s.id}"></select>
+              <button onclick="book(${s.id})">✅ Confirm booking</button>
+              <div class="result" id="result${s.id}"></div>
+              <div class="result" id="pay${s.id}"></div>
+            </div>`;
+          list.appendChild(div);
+          loadRating(s.id);
+        });
+      } catch (e) {
+        msg.textContent = 'Cannot reach catalog service';
+      }
+    }
+
+    async function loadRating(salonId) {
+      const el = document.getElementById('rating' + salonId);
+      if (!el) return;
+      try {
+        const res = await fetch('http://localhost:3002/salons/' + salonId + '/rating', { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) { el.innerHTML = starsHtml(0, 0); return; }
+        el.innerHTML = starsHtml(data.average_rating, data.review_count);
+      } catch (e) {
+        // keep the rating that is already shown
+      }
+    }
+
+    async function toggleReviews(salonId) {
+      const box = document.getElementById('revList' + salonId);
+      if (box.style.display === 'block') { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.textContent = 'Loading...';
+      try {
+        const res = await fetch('http://localhost:3002/salons/' + salonId + '/reviews', { headers: authHeaders() });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (e) {
+          box.textContent = 'Server replied with status ' + res.status + ' (not JSON): ' + text.slice(0, 80);
+          return;
+        }
+        if (!res.ok) { box.textContent = data.error || ('Could not load reviews (' + res.status + ')'); return; }
+        const list = Array.isArray(data) ? data : (Array.isArray(data.reviews) ? data.reviews : null);
+        if (list === null) { box.textContent = 'Unexpected reply: ' + text.slice(0, 120); return; }
+        if (list.length === 0) { box.textContent = 'No reviews yet'; return; }
+        box.textContent = '';
+        list.forEach(r => {
+          const item = document.createElement('div');
+          item.className = 'revItem';
+          item.textContent = '⭐ ' + r.rating + '/5' + (r.comment ? ' - ' + r.comment : '');
+          box.appendChild(item);
+        });
+      } catch (e) {
+        box.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function toggleWrite(salonId) {
+      const box = document.getElementById('write' + salonId);
+      if (box.style.display === 'block') { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      box.textContent = 'Loading...';
+      try {
+        const [aRes, rRes] = await Promise.all([
+          fetch('http://localhost:3004/appointments', { headers: authHeaders() }),
+          fetch('http://localhost:3002/salons/' + salonId + '/reviews', { headers: authHeaders() })
+        ]);
+        const appts = await aRes.json();
+        const revs = await rRes.json();
+        if (!aRes.ok) { box.textContent = appts.error || 'Could not load your appointments'; return; }
+        const reviewed = new Set(Array.isArray(revs) ? revs.map(r => r.appointment_id) : []);
+        const eligible = appts.filter(a => a.salon_id === salonId && a.status === 'completed' && !reviewed.has(a.id));
+        if (eligible.length === 0) {
+          box.textContent = 'You can write a review after a completed appointment in this salon.';
+          return;
+        }
+        box.innerHTML = `
+          <select id="wappt${salonId}">
+            ${eligible.map(a => `<option value="${a.id}">Appointment #${a.id} - ${fmt(a.start_time)}</option>`).join('')}
+          </select>
+          <select id="wrating${salonId}">
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3">3 - OK</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Bad</option>
+          </select>
+          <input type="text" id="wcomment${salonId}" placeholder="Comment (optional)">
+          <button onclick="submitSalonReview(${salonId})">💌 Send review</button>
+          <div class="result" id="wmsg${salonId}"></div>`;
+      } catch (e) {
+        box.textContent = 'Error: ' + e.message;
+      }
+    }
+
+    async function submitSalonReview(salonId) {
+      const wmsg = document.getElementById('wmsg' + salonId);
+      const appointmentId = Number(document.getElementById('wappt' + salonId).value);
+      const rating = Number(document.getElementById('wrating' + salonId).value);
+      const comment = document.getElementById('wcomment' + salonId).value.trim();
+      wmsg.style.color = 'red';
+      wmsg.textContent = '';
+      try {
+        const res = await fetch('http://localhost:3002/salons/' + salonId + '/reviews', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ appointment_id: appointmentId, rating: rating, comment: comment })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { wmsg.textContent = data.error || 'Could not send review'; return; }
+        const box = document.getElementById('write' + salonId);
+        box.textContent = 'Thank you! Your review was saved. 💖';
+        box.style.color = 'green';
+        document.getElementById('revList' + salonId).style.display = 'none';
+        loadRating(salonId);
+      } catch (e) {
+        wmsg.textContent = 'Cannot reach catalog service';
+      }
+    }
+
+    async function toggleForm(salonId) {
+      const f = document.getElementById('form' + salonId);
+      const opening = f.style.display !== 'block';
+      f.style.display = opening ? 'block' : 'none';
+      if (opening && !f.dataset.loaded) {
+        await loadOptions(salonId);
+        f.dataset.loaded = '1';
+      }
+    }
+
+    async function loadOptions(salonId) {
+      const result = document.getElementById('result' + salonId);
+      result.style.color = 'red';
+      try {
+        const [stRes, svRes] = await Promise.all([
+          fetch('http://localhost:3002/salons/' + salonId + '/stylists'),
+          fetch('http://localhost:3002/salons/' + salonId + '/services')
+        ]);
+        const stylists = await stRes.json();
+        const services = await svRes.json();
+        if (!stRes.ok || !svRes.ok) { result.textContent = 'Could not load stylists/services'; return; }
+        document.getElementById('stylist' + salonId).innerHTML =
+          stylists.map(s => `<option value="${s.id}">Stylist: ${s.name}</option>`).join('');
+        document.getElementById('service' + salonId).innerHTML =
+          services.map(s => `<option value="${s.id}">${s.name} - ${s.price} (${s.duration_minutes} min)</option>`).join('');
+      } catch (e) {
+        result.textContent = 'Cannot reach catalog service';
+      }
+    }
+
+    async function loadSlots(salonId) {
+      const result = document.getElementById('result' + salonId);
+      const slotSelect = document.getElementById('slot' + salonId);
+      const date = document.getElementById('date' + salonId).value;
+      const stylistId = document.getElementById('stylist' + salonId).value;
+      const serviceId = document.getElementById('service' + salonId).value;
+      result.style.color = 'red';
+      result.textContent = '';
+      slotSelect.innerHTML = '';
+      if (!date || !stylistId || !serviceId) { result.textContent = 'Pick a stylist, a service and a date'; return; }
+      try {
+        const res = await fetch(
+          'http://localhost:3002/stylists/' + stylistId + '/availability?date=' + date + '&serviceId=' + serviceId,
+          { headers: authHeaders() }
+        );
+        const data = await res.json();
+        if (!res.ok) { result.textContent = data.error || 'Could not load times'; return; }
+        if (data.slots.length === 0) { result.textContent = 'No free times on this day, try another date'; return; }
+        slotSelect.innerHTML = data.slots.map(s => `<option value="${s.start}">${fmt(s.start).slice(11)}</option>`).join('');
+      } catch (e) {
+        result.textContent = 'Cannot reach catalog service';
+      }
+    }
+
+    async function book(salonId) {
+      const result = document.getElementById('result' + salonId);
+      const payBox = document.getElementById('pay' + salonId);
+      const stylistId = Number(document.getElementById('stylist' + salonId).value);
+      const serviceId = Number(document.getElementById('service' + salonId).value);
+      const start = document.getElementById('slot' + salonId).value;
+      result.style.color = 'red';
+      payBox.innerHTML = '';
+      if (!start) { result.textContent = 'Press Show times and pick a time first'; return; }
+      try {
+        const res = await fetch('http://localhost:3004/appointments', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            salon_id: salonId,
+            stylist_id: stylistId,
+            service_id: serviceId,
+            start_time: start
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) { result.textContent = data.error || 'Booking failed'; return; }
+        result.style.color = 'green';
+        result.textContent = 'Booked! 🎉 Appointment id: ' + data.id;
+        payBox.innerHTML = `<button onclick="pay(${data.id}, ${salonId}, ${Number(data.price)})">💳 Pay ${Number(data.price)}</button>`;
+        loadSlots(salonId);
+      } catch (e) {
+        result.textContent = 'Cannot reach booking service';
+      }
+    }
+
+    async function pay(appointmentId, salonId, amount) {
+      const payBox = document.getElementById('pay' + salonId);
+      try {
+        const res = await fetch('http://localhost:3005/payments', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ appointment_id: appointmentId, amount: amount })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          payBox.innerHTML = '<span style="color:red">' + (data.error || 'Payment failed') + '</span>';
+          return;
+        }
+        payBox.innerHTML =
+          '<span style="color:green">Paid! 💖 Payment id: ' + data.id + '</span>' +
+          '<button onclick="refund(' + data.id + ',' + salonId + ')">↩️ Refund</button>';
+      } catch (e) {
+        payBox.innerHTML = '<span style="color:red">Cannot reach payment service</span>';
+      }
+    }
+
+    async function refund(paymentId, salonId) {
+      const payBox = document.getElementById('pay' + salonId);
+      try {
+        const res = await fetch('http://localhost:3005/payments/' + paymentId + '/refund', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          payBox.innerHTML = '<span style="color:red">' + (data.error || 'Refund failed') + '</span>';
+          return;
+        }
+        payBox.innerHTML = '<span style="color:green">Refunded!</span>';
+      } catch (e) {
+        payBox.innerHTML = '<span style="color:red">Cannot reach payment service</span>';
+      }
+    }
+
+    async function loadMyReviews(appts) {
+      const map = {};
+      const salonIds = [...new Set(appts.filter(a => a.status === 'completed').map(a => a.salon_id))];
+      await Promise.all(salonIds.map(async id => {
+        try {
+          const res = await fetch('http://localhost:3002/salons/' + id + '/reviews', { headers: authHeaders() });
+          const data = await res.json();
+          if (res.ok && Array.isArray(data)) data.forEach(r => { map[r.appointment_id] = r; });
+        } catch (e) {}
+      }));
+      return map;
+    }
+
+    async function showAppointments() {
+      document.getElementById('salonsView').style.display = 'none';
+      document.getElementById('apptView').style.display = 'block';
+      const list = document.getElementById('apptList');
+      const msg = document.getElementById('apptMsg');
+      list.innerHTML = '';
+      msg.style.color = 'red';
+      msg.textContent = '';
+      try {
+        const res = await fetch('http://localhost:3004/appointments', { headers: authHeaders() });
+        const appts = await res.json();
+        if (!res.ok) { msg.textContent = appts.error || 'Could not load appointments'; return; }
+        if (appts.length === 0) { msg.textContent = 'No appointments yet'; return; }
+        const myReviews = await loadMyReviews(appts);
+        appts.forEach(a => {
+          const salon = salonsCache.find(s => s.id === a.salon_id);
+          const active = a.status === 'pending' || a.status === 'confirmed';
+          const completed = a.status === 'completed';
+          const rev = myReviews[a.id];
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <h3>${salon ? salon.name : 'Salon #' + a.salon_id}</h3>
+            <div>📌 Appointment #${a.id}</div>
+            <div>🕒 ${fmt(a.start_time)} - ${fmt(a.end_time).slice(11)}</div>
+            <div>💰 Price: ${Number(a.price)}</div>
+            <div>${statusBadge(a.status)}</div>
+            ${active ? `
+              <button onclick="toggleResched(${a.id})">🔄 Reschedule</button>
+              <div class="reschedForm" id="resched${a.id}">
+                <input type="date" id="rdate${a.id}">
+                <button onclick="loadReschedSlots(${a.id}, ${a.stylist_id}, ${a.service_id})">🕒 Show times</button>
+                <select id="rslot${a.id}"></select>
+                <button onclick="reschedule(${a.id})">✅ Confirm new time</button>
+                <div class="result" id="rmsg${a.id}"></div>
+              </div>
+              <button onclick="cancelAppt(${a.id})">❌ Cancel</button>` : ''}
+            ${completed && rev ? `<div class="result" id="myrev${a.id}"></div>` : ''}
+            ${completed && !rev ? `
+              <button onclick="toggleReview(${a.id})">⭐ Review</button>
+              <div class="reviewForm" id="review${a.id}">
+                <select id="rrating${a.id}">
+                  <option value="5">5 - Excellent</option>
+                  <option value="4">4 - Good</option>
+                  <option value="3">3 - OK</option>
+                  <option value="2">2 - Poor</option>
+                  <option value="1">1 - Bad</option>
+                </select>
+                <input type="text" id="rcomment${a.id}" placeholder="Comment (optional)">
+                <button onclick="submitReview(${a.id}, ${a.salon_id})">💌 Send review</button>
+                <div class="result" id="revmsg${a.id}"></div>
+              </div>` : ''}`;
+          list.appendChild(div);
+          if (completed && rev) {
+            document.getElementById('myrev' + a.id).textContent =
+              'Your review: ⭐ ' + rev.rating + '/5' + (rev.comment ? ' - ' + rev.comment : '');
+          }
+        });
+      } catch (e) {
+        msg.textContent = 'Cannot reach booking service';
+      }
+    }
+
+    function toggleReview(id) {
+      const f = document.getElementById('review' + id);
+      f.style.display = f.style.display === 'block' ? 'none' : 'block';
+    }
+
+    async function submitReview(appointmentId, salonId) {
+      const revmsg = document.getElementById('revmsg' + appointmentId);
+      const rating = Number(document.getElementById('rrating' + appointmentId).value);
+      const comment = document.getElementById('rcomment' + appointmentId).value.trim();
+      revmsg.style.color = 'red';
+      revmsg.textContent = '';
+      try {
+        const res = await fetch('http://localhost:3002/salons/' + salonId + '/reviews', {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ appointment_id: appointmentId, rating: rating, comment: comment })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { revmsg.textContent = data.error || 'Could not send review'; return; }
+        await showAppointments();
+        const msg = document.getElementById('apptMsg');
+        msg.style.color = 'green';
+        msg.textContent = 'Thank you! Your review was saved. 💖';
+      } catch (e) {
+        revmsg.textContent = 'Cannot reach catalog service';
+      }
+    }
+
+    function toggleResched(id) {
+      const f = document.getElementById('resched' + id);
+      f.style.display = f.style.display === 'block' ? 'none' : 'block';
+    }
+
+    async function loadReschedSlots(id, stylistId, serviceId) {
+      const rmsg = document.getElementById('rmsg' + id);
+      const slotSelect = document.getElementById('rslot' + id);
+      const date = document.getElementById('rdate' + id).value;
+      rmsg.style.color = 'red';
+      rmsg.textContent = '';
+      slotSelect.innerHTML = '';
+      if (!date) { rmsg.textContent = 'Pick a date first'; return; }
+      try {
+        const res = await fetch(
+          'http://localhost:3002/stylists/' + stylistId + '/availability?date=' + date + '&serviceId=' + serviceId,
+          { headers: authHeaders() }
+        );
+        const data = await res.json();
+        if (!res.ok) { rmsg.textContent = data.error || 'Could not load times'; return; }
+        if (data.slots.length === 0) { rmsg.textContent = 'No free times on this day, try another date'; return; }
+        slotSelect.innerHTML = data.slots.map(s => `<option value="${s.start}">${fmt(s.start).slice(11)}</option>`).join('');
+      } catch (e) {
+        rmsg.textContent = 'Cannot reach catalog service';
+      }
+    }
+
+    async function reschedule(id) {
+      const rmsg = document.getElementById('rmsg' + id);
+      const start = document.getElementById('rslot' + id).value;
+      rmsg.style.color = 'red';
+      rmsg.textContent = '';
+      if (!start) { rmsg.textContent = 'Press Show times and pick a time first'; return; }
+      try {
+        const res = await fetch('http://localhost:3004/appointments/' + id, {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ start_time: start })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { rmsg.textContent = data.error || 'Reschedule failed'; return; }
+        await showAppointments();
+        const msg = document.getElementById('apptMsg');
+        msg.style.color = 'green';
+        msg.textContent = 'Appointment rescheduled';
+      } catch (e) {
+        rmsg.textContent = 'Cannot reach booking service';
+      }
+    }
+
+    async function cancelAppt(id) {
+      const msg = document.getElementById('apptMsg');
+      msg.style.color = 'red';
+      msg.textContent = '';
+      try {
+        const res = await fetch('http://localhost:3004/appointments/' + id, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+        });
+        if (res.status !== 204) {
+          const data = await res.json().catch(() => ({}));
+          msg.textContent = data.error || 'Cancel failed';
+          return;
+        }
+        await showAppointments();
+        msg.style.color = 'green';
+        msg.textContent = 'Appointment cancelled';
+      } catch (e) {
+        msg.textContent = 'Cannot reach booking service';
+      }
+    }
+
+    if (localStorage.getItem('token')) route();
+  </script>
+</body>
+</html>

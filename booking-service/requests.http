@@ -400,3 +400,38 @@ Authorization: Bearer {{customerLogin.response.body.token}}
 ### Cancel appointment 11 -> 204
 DELETE http://localhost:3004/appointments/11
 Authorization: Bearer {{customerLogin.response.body.token}}
+
+
+### Pay for appointment 12 -> 201
+POST http://localhost:3005/payments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{ "appointment_id": 12, "amount": 150 }
+
+### Pay again (same appointment) -> 409
+POST http://localhost:3005/payments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{ "appointment_id": 12, "amount": 150 }
+
+### Invalid amount -> 400
+POST http://localhost:3005/payments
+Content-Type: application/json
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+{ "appointment_id": 12, "amount": -5 }
+
+### Refund payment 2 -> 200
+POST http://localhost:3005/payments/2/refund
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### Refund payment 2 again -> 409
+POST http://localhost:3005/payments/2/refund
+Authorization: Bearer {{customerLogin.response.body.token}}
+
+### Refund payment that does not exist -> 404
+POST http://localhost:3005/payments/9999/refund
+Authorization: Bearer {{customerLogin.response.body.token}}
+
